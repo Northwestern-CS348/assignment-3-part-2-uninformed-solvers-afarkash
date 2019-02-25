@@ -33,8 +33,31 @@ class TowerOfHanoiGame(GameMaster):
         Returns:
             A Tuple of Tuples that represent the game state
         """
-        ### student code goes here
-        pass
+        peg1 = []
+        peg2 = []
+        peg3 = []
+        allPegs = [peg1, peg2, peg3]
+        fullRep = []
+        
+        facts = self.kb.facts
+        for fact in facts:
+            if(fact.statement.predicate == "on"):
+                if(fact.statement.terms[1].term.element == "peg1"):
+                    disk = (fact.statement.terms[0].term.element).split("disk")[1]
+                    peg1.append(int(disk))
+                if(fact.statement.terms[1].term.element == "peg2"):
+                    disk = (fact.statement.terms[0].term.element).split("disk")[1]
+                    peg2.append(int(disk))
+                if(fact.statement.terms[1].term.element == "peg3"):
+                    disk = (fact.statement.terms[0].term.element).split("disk")[1]
+                    peg3.append(int(disk))
+                    
+        for peg in allPegs:
+            peg = tuple(sorted(peg))
+            fullRep.append(peg)
+        fullRep = tuple(fullRep)
+        #print(fullRep)
+        return fullRep        
 
     def makeMove(self, movable_statement):
         """
@@ -52,8 +75,32 @@ class TowerOfHanoiGame(GameMaster):
         Returns:
             None
         """
-        ### Student code goes here
-        pass
+        
+        disk = (movable_statement.terms[0].term.element)
+        initPeg = (movable_statement.terms[1].term.element)
+        destPeg = (movable_statement.terms[2].term.element)
+        
+        #remove facts that are no longer true, involving predicates on, top, and empty
+        removeOn = parse_input("fact: (on " + str(disk) + " " + str(initPeg) + ")")
+        removeTop = parse_input("fact: (on " + str(disk) + " " + str(initPeg) + ")")
+        self.kb.kb_retract(removeOn)
+        self.kb.kb_retract(removeTop)
+        if(self.kb.kb_ask(parse_input("fact: (empty " + str(destPeg) + ")"))):
+            self.kb.kb_retract(parse_input("fact: (empty " + str(destPeg) + ")"))
+
+        
+        #assert facts that are now true
+        addOn = parse_input("fact: (on " + str(disk) + " " + str(destPeg) + ")")
+        addTop = parse_input("fact: (on " + str(disk) + " " + str(destPeg) + ")")
+        addEmpty = (parse_input("fact: (empty " + str(initPeg) + ")"))
+        self.kb.kb_assert(addOn)
+        self.kb.kb_assert(addTop)
+        
+        if(self.kb.kb_ask(parse_input("fact: (on " + str(disk) + " ?X)")) == False):
+            self.kb.kb_assert(addEmpty)
+        
+        return        
+
 
     def reverseMove(self, movable_statement):
         """
@@ -99,8 +146,57 @@ class Puzzle8Game(GameMaster):
         Returns:
             A Tuple of Tuples that represent the game state
         """
-        ### Student code goes here
-        pass
+        row1 = []
+        row2 = []
+        row3 = []
+        allRows = [row1, row2, row3]
+        fullRep = []
+        
+        facts = self.kb.facts
+        for fact in facts:
+            if(fact.statement.predicate == "coordinate"):
+                
+                if((fact.statement.terms[0].term.element) == "empty"):
+                    tileNum = -1
+                else:
+                    tileNum = int((fact.statement.terms[0].term.element).split("tile")[1])
+
+                xpos = int((fact.statement.terms[1].term.element).split("pos")[1])
+                ypos = int((fact.statement.terms[2].term.element).split("pos")[1])
+
+                
+                if(ypos == 1):
+                    row1.append([xpos, tileNum])
+                if(ypos == 2):
+                    row2.append([xpos, tileNum])
+                if(ypos == 3):
+                    row3.append([xpos, tileNum])
+
+        r1 = []
+        r2 = []
+        r3 = []
+
+        for row in allRows:
+            row = sorted(row, key=lambda x: x[0])
+
+            for tile in row:
+                if(len(r1) < 3):
+                    r1.append(tile[1])
+                    continue
+                if(len(r2) < 3):
+                    r2.append(tile[1])
+                    continue
+                if(len(r3) < 3):
+                    r3.append(tile[1])
+                    continue
+        allRs = [r1, r2, r3]
+        
+        for r in allRs:
+            r = tuple(r)
+            fullRep.append(r)         
+        fullRep = tuple(fullRep)
+
+        return fullRep        
 
     def makeMove(self, movable_statement):
         """
@@ -118,8 +214,24 @@ class Puzzle8Game(GameMaster):
         Returns:
             None
         """
-        ### Student code goes here
-        pass
+        tile = (movable_statement.terms[0].term.element)
+        initX = (movable_statement.terms[1].term.element)
+        initY = (movable_statement.terms[2].term.element)
+        destX = (movable_statement.terms[3].term.element)
+        destY = (movable_statement.terms[4].term.element)        
+        
+        #remove facts that are no longer true, involving predicates on, top, and empty
+        removeCoordinate = parse_input("fact: (coordinate " + str(tile) + " " + str(initX) + " " + str(initY) + ")")
+        removeEmpty = ("fact: (coordinate empty " + str(destX) + " " + str(destY) + ")")
+        self.kb.kb_retract(removeCoordinate)
+        #self.kb.kb_retract(removeEmpty)
+        
+        #assert facts that are now true
+        assertCoordinate = parse_input("fact: (coordinate " + str(tile) + " " + str(destX) + " " + str(destY) + ")")
+        assertEmpty = parse_input("fact: (coordinate empty " + str(initX) + " " + str(initY) + ")")
+        self.kb.kb_assert(assertCoordinate)             
+
+        return        
 
     def reverseMove(self, movable_statement):
         """
